@@ -1,4 +1,4 @@
-<?php
+<?php  
 /**
  * ====================================================================================
  *                           PREMIUM URL SHORTENER (c) KBRmedia
@@ -88,26 +88,6 @@
 <?php 
 function get_query($dbinfo){
 
-            $query[] = "CREATE TABLE IF NOT EXISTS `{$dbinfo["prefix"]}subscription` (
-              `tid` int(11) NOT NULL AUTO_INCREMENT,
-              `userid` int(11) DEFAULT NULL,
-              `plan` varchar(255) DEFAULT NULL,
-              `planid` int(11) DEFAULT NULL,
-              `status` varchar(255) DEFAULT NULL,
-              `amount` decimal(16,2) DEFAULT NULL,
-              `date` timestamp NULL DEFAULT NULL,
-              `expiry` datetime DEFAULT NULL,
-              `lastpayment` datetime DEFAULT NULL,
-              `data` longtext DEFAULT NULL,
-              `coupon` varchar(255) DEFAULT NULL,
-              `uniqueid` varchar(255) DEFAULT NULL,
-              PRIMARY KEY (`tid`)
-            ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;";
-            $query[] = "INSERT INTO `{$dbinfo["prefix"]}settings` (`config`, `var`) VALUES
-            ('stpk', ''),
-            ('stsk',''),
-            ('stripesig',''),
-            ('pt','');";
 
 			// V5.9.1
 			$query[] = "ALTER TABLE `{$dbinfo["prefix"]}url` ADD `status` INT(1) NOT NULL DEFAULT '1' AFTER `parameters`;";

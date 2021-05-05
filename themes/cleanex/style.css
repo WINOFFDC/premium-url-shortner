@@ -2681,6 +2681,7 @@ footer .languages {
   text-align: left;
 }
 footer .languages .langs {
+  width: 310px;
   display: none;
   padding: 5px;
   background: #334151;
@@ -2692,6 +2693,7 @@ footer .languages .langs {
   -webkit-border-radius: 2px 2px 0 2px;
 }
 footer .languages .langs a {
+  width: 90px;
   color: #fff !important;
   display: block;
   float: left;
@@ -3156,8 +3158,8 @@ ul.form_opt li a.current {
 }
 @media screen and (max-width: 779px) {
   section#plan .price-table {
-    width: 100% !important;
-    max-width: 100% !important;
+    width: 100%;
+    max-width: 100%;
   }
   section#plan .price-table .table-inner {
     border-radius: 5px !important;

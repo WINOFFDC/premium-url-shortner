@@ -2750,24 +2750,17 @@ class Admin{
         continue;       
       } 
 
-      try {
-
-          $planYearly = \Stripe\Plan::create(array(
-            "amount" => $plan->price_yearly*100,
-            "interval" => "year",
-            "nickname" => "{$plan->name} - Yearly",
-            "product" => $product->id,            
-            "currency" => strtolower($this->config["currency"]),
-            "id" => $plan->slug."yearly"
-          ));  
-
-      } catch (Exception $e) {
-        error_log("Stripe Error: ".$e->getMessage());
-        continue;       
-      }     
+      $planYearly = \Stripe\Plan::create(array(
+        "amount" => $plan->price_yearly*100,
+        "interval" => "year",
+        "nickname" => "{$plan->name} - Yearly",
+        "product" => $product->id,            
+        "currency" => strtolower($this->config["currency"]),
+        "id" => $plan->slug."yearly"
+      ));      
 
     }
-    return Main::redirect(Main::ahref("plans", "", FALSE), ["success", "Plans have been synced."]);    
+
   }  
   /**
    * Sync Plans

@@ -40,6 +40,7 @@ if(error == 0){
       if(include.indexOf(getHost(el.getAttribute('href'))) > -1) skip = 0;
     }    
     if(skip === 0){
+      console.log(el.getAttribute('href'));
       GemPixel(url+'/api/fullpage?key='+key+'&url='+el.getAttribute('href'), function(response) {
         if(response.error=='0'){
           el.setAttribute('href',response.short);
