@@ -287,7 +287,8 @@ class API extends App{
 				$array["dtarget"][] = $device->link;
 			}
 		}
-
+		
+		$this->user->plan = $this->db->get("plans", ["id" => $this->user->planid], ["limit" => 1]);
 
 		$result = $short->add($array, ["noreturn" => TRUE, "api" => TRUE, "user" => $this->user]);
 

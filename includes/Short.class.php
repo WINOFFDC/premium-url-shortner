@@ -105,11 +105,11 @@ class Short extends App{
 		// Stats
 		if(strpos($this->action," ") || strpos($this->action,"+")) {
 			$this->action=rtrim(rtrim($this->action," "),"+");
-			return $this->stats();
+			return $this->checkstats();
 		}
 
 		// Run Subactions
-		if(!empty($this->do) && in_array($this->do,array("qr","i","ico")) && method_exists("Short", $this->do)){
+		if(!empty($this->do) && in_array($this->do,array("qr","i","ico", "stats")) && method_exists("Short", $this->do)){
 			$fn = $this->do;
 			return $this->$fn();
 		}
@@ -151,7 +151,7 @@ class Short extends App{
     // If require registration
 		if($this->config["require_registration"] && !isset($option["api"]) && !isset($this->user)) return array('error' => 1, 'msg' => e('Please create a free account or login to shorten URLs.'));
 
-		if(isset($this->user) && $this->user->plan->numurls > 0 && $this->count("user_urls") >= $this->user->plan->numurls) return array('error' => 1, 'msg' => e('You have reached your maximum links limit. Please upgrade to another plan.'));
+		if($this->pro() && isset($this->user) && $this->user->pro && $this->user->plan->numurls > 0 && $this->count("user_urls") >= $this->user->plan->numurls) return array('error' => 1, 'msg' => e('You have reached your maximum links limit. Please upgrade to another plan.'));
 
 		// Check if private
 		if($this->config["private"] && !isset($this->user)) return array('error' => 1, 'msg' => e('This service is meant to be used internally only.'));
@@ -205,7 +205,6 @@ class Short extends App{
 				$array["domain"] = $this->config["url"];
 			}
 		}
-
 
 		// Check Captcha
 		if($this->config["captcha"] && !isset($this->user) && !isset($_GET["bookmark"])){
@@ -1123,35 +1122,39 @@ class Short extends App{
 		return;
 	}
 	/**
+	 * Check Stats
+	 * @author GemPixel <https://gempixel.com>
+	 * @version 1.0
+	 * @return  [type] [description]
+	 */
+	private function checkstats(){
+		$this->action =  str_replace("+","", $this->action);
+
+		$current = $_SERVER["HTTP_HOST"].$_SERVER["REQUEST_URI"];
+
+		$current = str_replace("/".urlencode($this->action)."+", "", $current);
+		
+		$current = explode("?", idn_to_utf8($current))[0];
+
+		if("http://".$current == $this->config["url"] || "https://".$current == $this->config["url"]){
+			
+			$main = str_replace(["http://", "https://"], "", $this->config["url"]);
+			$url = $this->db->get("url","(BINARY alias=:a OR BINARY custom=:a) AND (domain LIKE :b OR domain = :c OR domain IS NULL)", ["limit" => 1], [":a" => $this->action, ":b" => "%{$main}", ":c" => ""]);
+
+		}else{
+
+			$url = $this->db->get("url","(BINARY alias=:a OR BINARY custom=:a) AND domain LIKE :b", ["limit" => 1], [":a" => $this->action, ":b" => "%{$current}"]);
+		}
+
+		if($url) Main::redirect($url->id."/stats");
+
+		return $this->_404();
+	}
+	/**
 	 * Stats Page
 	 * @since 5.7.2
 	 **/
-	private function stats(){
-		
-		$this->action =  str_replace("+","", $this->action);
-
-		if(!is_numeric($this->action)){
-			$current = $_SERVER["HTTP_HOST"].$_SERVER["REQUEST_URI"];
-
-			$current = str_replace("/".urlencode($this->action)."+", "", $current);
-			
-			$current = explode("?", idn_to_utf8($current))[0];
-
-			if("http://".$current == $this->config["url"] || "https://".$current == $this->config["url"]){
-				
-				$main = str_replace(["http://", "https://"], "", $this->config["url"]);
-				$url = $this->db->get("url","(BINARY alias=:a OR BINARY custom=:a) AND (domain LIKE :b OR domain = :c OR domain IS NULL)", ["limit" => 1], [":a" => $this->action, ":b" => "%{$main}", ":c" => ""]);
-
-			}else{
-
-				$url = $this->db->get("url","(BINARY alias=:a OR BINARY custom=:a) AND domain LIKE :b", ["limit" => 1], [":a" => $this->action, ":b" => "%{$current}"]);
-			}
-
-			if(!$url) return Main::redirect("404");
-			
-			return Main::redirect($url->id."+");
-		}
-
+	private function stats(){			
 
 		if(!$url = $this->db->get("url", ["id" => ":id"], ["limit" => 1], [":id" => $this->action])) return $this->_404();
 		
@@ -1324,9 +1327,23 @@ class Short extends App{
 			$size="149x149";
 		}
 
-		if(!$url = $this->db->get("url","BINARY alias=:a OR BINARY custom=:a",array("limit" => "1"),array(":a"=>$this->action))){
-			return;
+		$current = $_SERVER["HTTP_HOST"].$_SERVER["REQUEST_URI"];
+
+		$current = str_replace("/".urlencode($this->action)."/qr", "", $current);
+		
+		$current = explode("?", idn_to_utf8($current))[0];
+
+
+		if("http://".$current == $this->config["url"] || "https://".$current == $this->config["url"]){
+			// Fetch URL and show 404 if doesn't exist
+			$url = $this->db->get("url","(BINARY alias=:id OR BINARY custom=:id) AND (domain LIKE :domain OR domain IS NULL OR  domain = '')",array("limit"=> 1),array(":id"=>$this->action, ":domain" => "%$current"));
+
+		}else{
+			// Fetch URL and show 404 if doesn't exist
+			$url = $this->db->get("url","(BINARY alias=:id OR BINARY custom=:id) AND domain LIKE :domain",array("limit"=> 1),array(":id"=>$this->action, ":domain" => "%$current"));	
 		}
+
+		if(!$url) return false;
 		
 		$api_url = "http://chart.apis.google.com/chart?chs=$size&chld=L|0&choe=UTF-8&cht=qr&chl=".urlencode((!empty($url->domain) ? $url->domain : $this->config["url"])."/{$this->action}?source=qr");	
 
@@ -1504,7 +1521,7 @@ class Short extends App{
 		if(empty($url)) return FALSE;		
 
 		$parsed = parse_url($url);
-		$protocol = $parsed['scheme'];		
+		$protocol = $parsed['scheme'] ?? 'http://';		
 
 		$schemes = explode(",", $this->config["schemes"]);
 

@@ -1139,6 +1139,7 @@ class Main{
       curl_setopt($curl, CURLOPT_RETURNTRANSFER, true);
       curl_setopt($curl, CURLOPT_SSL_VERIFYPEER, false);
       curl_setopt($curl, CURLOPT_CONNECTTIMEOUT, 2);
+      curl_setopt($curl, CURLOPT_TIMEOUT, 2);
       $resp = curl_exec($curl);
       curl_close($curl);
       if(isset($option["header"])){

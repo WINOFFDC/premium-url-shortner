@@ -605,7 +605,7 @@ class App{
       $max=floor($this->db->rowCount/$this->limit);
     }   
     if($this->page > 1 && $this->page > $max) Main::redirect("user",array("danger","No URLs found."));
-    $pagination = Main::pagination($max,$this->page,Main::href("user?filter={$order[2]}&amp;page=%d"));
+    $pagination = Main::pagination($max,$this->page,Main::href("user?sort={$order[2]}&amp;page=%d"));
 
     // Show Template		
 		$this->isUser=TRUE;
@@ -666,7 +666,7 @@ class App{
 
 		if($this->db->rowCountAll > 3){
 			$width = round(100 / $this->db->rowCountAll, 3);
-			Main::add("<style>section#plan .price-table { width: {$width}% !important} </style>","custom", FALSE);
+			Main::add("<style>.price-table { width: {$width}% !important} </style>","custom", FALSE);
 		}
 		$discountMax = 0;
 		foreach ($plans as $i => $plan) {
@@ -851,9 +851,7 @@ class App{
 		}
 
 		$plan = $this->db->get("plans", ["id" => $this->id], ["limit" => "1"]);
-
-		// Check if already pro
-		if($this->pro() && $this->user->planid == $this->id && !isset($_SESSION["renew"])) return Main::redirect("",array("warning",e("You are already a pro member.")));
+		
 
 		// Determine Fee
 		if(!empty($this->do) && $this->do=="yearly"){
@@ -1017,7 +1015,7 @@ class App{
 			return Main::redirect("",array("warning",e("An error ocurred, please try again. You have not been charged.")));	
 		}			
 
-		if($subscription->status != "active"){
+		if(!in_array($subscription->status, ['incomplete', 'active'])){
 			return Main::redirect("",array("warning",e("Your credit card was declined. Please check your credit card and try again later.")));	
 		}
 
@@ -1045,6 +1043,10 @@ class App{
   					];
 
   	if($this->db->update("user",[],array("id" => $this->user->id), $UArray)){
+
+			if($subscription->status == "incomplete"){
+				return Main::redirect("",array("warning",e("Please confirm the transaction. You should receive an email or an sms from your bank.")));
+			}  		
 
 		if(!empty($this->config["saleszapier"])){
 					Main::curl($this->config["saleszapier"], [
@@ -1080,7 +1082,8 @@ class App{
 															<td class="alignright" width="80%">Charged on '.date("d m Y - H:i:s").'</td>
 														</tr>';
 
-	      Main::send($mail);	  		
+	      Main::send($mail);	  
+
   		return Main::redirect(Main::href("user/settings","",FALSE),array("success",e("You were successfully subscribed. Thank you!")));
 		}
   	return Main::redirect(Main::href("user/settings","",FALSE),array("danger",e("An unexpected issue occurred. Please contact us for more info.")));		
@@ -1397,9 +1400,7 @@ class App{
 		$id = array_reverse($id);	
 
 		if(!empty($this->id) && is_numeric($id[0])){
-
 			if(!$bundle = $this->db->get("bundle",array("id"=>"?","access"=>"?"),array("limit"=>1),array($id[0],"public"))) return $this->_404();
-
 			// Get URLs
 			$urls = $this->db->get("url",array("userid"=>"?","public"=>"?","bundle"=>"?"),array("order"=>"date","limit"=>(($this->page-1)*$this->limit).", {$this->limit}","count"=>TRUE),array($user->id,"1",$bundle->id));	
 			// Update view 

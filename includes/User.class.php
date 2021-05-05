@@ -671,7 +671,7 @@ class User extends App{
 					unset($_SESSION["redirect"]);
 					return Main::redirect($r ,array("success",e("You have been successfully registered.")));	
 				}
-				return Main::redirect(Main::href("user/login","",FALSE),array("success",e("You have been successfully registered.")));				
+				return Main::redirect(Main::href("user","",FALSE),array("success",e("You have been successfully registered.")));				
 			}
 		}
 		// Set Meta titles
@@ -1243,25 +1243,27 @@ class User extends App{
 					}
 				}
 
-				if($this->permission('splash') && is_numeric($_POST["type"])){
+				if($this->permission('splash') !== FALSE && is_numeric($_POST["type"])){
 					$data[":type"]=Main::clean($_POST["type"],3,TRUE);
 				}
 
-				if($this->permission('overlay') && preg_match("~overlay-(.*)~", $_POST["type"])){
+				if($this->permission('overlay') !== FALSE && preg_match("~overlay-(.*)~", $_POST["type"])){
 
 					if(Main::iframePolicy($_POST["url"])) return Main::redirect(Main::href("user/edit/{$this->id}","",FALSE),array("danger",e("This URL cannot be used with this redirect method because browsers will prevent it for security reasons.")));
 					$data[":type"] = $_POST["type"];
 				}
 
-				if($this->permission('pixels')){
+				if($this->permission('pixels') !== FALSE){
 
 					$pixels = "";
 					if(isset($_POST["pixels"]) && is_array($_POST["pixels"])){
 						$data[":pixels"] = implode(",", $_POST["pixels"]);
 					}		
+
 				}			
 
-				if(!empty($_POST["domain"]) && $this->permission('domain') && $this->db->get("domains", ["domain" => "?", "userid" => "?"], ["limit" => "1"], [$_POST["domain"], $this->user->id])){
+
+				if(!empty($_POST["domain"]) && $this->permission('domain') !== FALSE && $this->db->get("domains", ["domain" => "?", "userid" => "?"], ["limit" => "1"], [$_POST["domain"], $this->user->id])){
 					$data[":domain"] = Main::clean($_POST["domain"],TRUE,3);
 				}
 
@@ -1582,7 +1584,7 @@ class User extends App{
             $content .= "</optgroup>";
                     }
                     if($gtmpixel = json_decode($this->user->gtmpixel)){
-           $content .=' <optgroup label="Quora">';
+           $content .=' <optgroup label="GTM">';
                         foreach ($gtmpixel as $key => $ad){
                $content .= "<option value='gtmpixel-{$key}' ".(in_array("gtmpixel-{$key}", $activePixels) ? "selected": "").">{$ad->name}</option>";
                         }                        
@@ -2015,7 +2017,7 @@ class User extends App{
 	      			unlink(ROOT."/content/{$data->avatar}");
 	      			unlink(ROOT."/content/{$data->banner}");
 	      		}
-						$this->db->update("url",array("type"=>"?"),array("userid"=>"?","type"=>"?"),array($splash->id,$this->user->id,$this->id));
+						$this->db->update("url",array("type"=>"?"),array("userid"=>"?","type"=>"?"),array('direct',$this->user->id,$this->id));
 						$this->db->delete("splash",array("userid"=>"?","id"=>"?"),array($this->user->id,$this->id));
 						return Main::redirect(Main::href("user/splash","",FALSE),array("success",e("The splash page has been deleted.")));      		
 	      	}
@@ -4492,7 +4494,7 @@ class User extends App{
 
 			if($count > 0 && $this->db->count("domains","userid='{$this->user->id}'") >= $count) return Main::redirect(Main::href("user/splash","",FALSE),array("danger",e("You have reached your max limit.")));				
 
-			if(!empty($this->user->domain) && empty($_POST["domain"])) return $this->domainClear();
+			// if(!empty($this->user->domain) && empty($_POST["domain"])) return $this->domainClear();
 
 			if(empty($_POST["domain"])) return Main::redirect(Main::href("user/domain","",FALSE),array("danger",e("This is not a valid domain name.")));
 
@@ -4552,6 +4554,8 @@ class User extends App{
 		}
 
 		if(Main::validate_nonce("delete_domain-{$this->id}")){
+			$domain = $this->db->get('domains', ['id' => $this->id], ['limit' => 1]);
+			$this->db->update("url", ['domain' => ''], ['domain' => $domain->domain]);
 			$this->db->delete("domains", ["id" => $this->id, "userid" => $this->user->id]);
 			return Main::redirect(Main::href("user/domain","",FALSE),array("success",e("This domain name has been deleted.")));
 		}
@@ -4851,8 +4855,7 @@ class User extends App{
 					"short" => $short
 				];
 			}
-
-			$this->db->update("user", ["profiledata" => json_encode($data, JSON_UNESCAPED_UNICODE)], ["id" => $this->user->id]);
+			$this->db->update("user", ["profiledata" => json_encode($data, JSON_UNESCAPED_UNICODE)], ["id" => $this->userid]);
 			return Main::redirect(Main::href("user/builder","",FALSE),array("success",e("Profile has been saved.")));
 		}
 

@@ -1,4 +1,4 @@
-<?php 
+<?php
 /**
  * ====================================================================================
  *                           PREMIUM URL SHORTENER (c) KBRmedia
@@ -450,6 +450,10 @@ $query[] = "CREATE TABLE IF NOT EXISTS `".trim($_POST["prefix"])."settings` (
 
 
 $query[] = "INSERT INTO `".trim($_POST["prefix"])."settings` (`config`, `var`) VALUES
+('stpk', ''),
+('stsk',''),
+('stripesig',''),
+('pt',''),
 ('url', ''),
 ('title', ''),
 ('description', ''),
@@ -544,6 +548,23 @@ $query[] = "INSERT INTO `".trim($_POST["prefix"])."settings` (`config`, `var`) V
 ('pppublic', ''),
 ('ppprivate', ''),
 ('manualapproval', '0');";
+
+
+$query[] = "CREATE TABLE IF NOT EXISTS `".trim($_POST["prefix"])."subscription` (
+  `tid` int(11) NOT NULL AUTO_INCREMENT,
+  `userid` int(11) DEFAULT NULL,
+  `plan` varchar(255) DEFAULT NULL,
+  `planid` int(11) DEFAULT NULL,
+  `status` varchar(255) DEFAULT NULL,
+  `amount` decimal(16,2) DEFAULT NULL,
+  `date` timestamp NULL DEFAULT NULL,
+  `expiry` datetime DEFAULT NULL,
+  `lastpayment` datetime DEFAULT NULL,
+  `data` longtext DEFAULT NULL,
+  `coupon` varchar(255) DEFAULT NULL,
+  `uniqueid` varchar(255) DEFAULT NULL,
+  PRIMARY KEY (`tid`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;";
 
 
 $query[] = "CREATE TABLE IF NOT EXISTS `".trim($_POST["prefix"])."splash` (
