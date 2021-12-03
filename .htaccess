@@ -1,4 +1,4 @@
-## Uncomment (remove # ONLY NOT ##) line below if installed in folder and add folder name after /
+## Uncomment (remove # ONLY NOT ##) line below if installed in folder and add older name after /
 
 <IfModule mod_rewrite.c>
 	<IfModule mod_negotiation.c>
